@@ -1,0 +1,25 @@
+# 构建目录
+build/
+*.dir/
+
+# Qt 缓存
+.qt/
+*.qmlc
+
+# 编译产物
+*.exe
+*.dll
+*.lib
+*.so
+*.o
+*.obj
+
+# IDE
+*.pro.user
+*.pro.user.*
+CMakeLists.txt.user
+.vscode/
+
+# 系统
+.DS_Store
+Thumbs.db
