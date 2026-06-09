@@ -2,19 +2,19 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-/*
-    模块：AppBar — 顶部应用栏
-    包含：Logo、标题、日期、主题切换、设置按钮、关闭按钮
-*/
+
+// 模块：AppBar — 顶部应用栏
+// 包含：Logo、标题、日期、主题切换、设置按钮、关闭按钮
+
 
 Rectangle {
     id: appBarRoot
 
     // ── 外部属性 ──
-    required property color primaryColor
-    required property color textColor
+    required property color primaryColor // 主题颜色
+    required property color textColor  // 字体颜色
     required property color secondaryTextColor
-    required property string currentTheme
+    required property string currentTheme // 主题，用于切换夜间和白天模式
     property var settingsMenu: null
     property var windowRoot: null
 
@@ -130,8 +130,7 @@ Rectangle {
                 onClicked: {
                     themeAnim.restart()
                     if (appBarRoot.windowRoot)
-                        appBarRoot.windowRoot.appSettings.theme =
-                                appBarRoot.currentTheme === "light" ? "dark" : "light"
+                        appBarRoot.windowRoot.toggleTheme()
                 }
             }
 

@@ -93,6 +93,11 @@ Window {
     // 4. 全局状态
     property bool isAdding: false
 
+    // 主题切换函数
+    function toggleTheme() {
+        appSettings.theme = appSettings.theme === "light" ? "dark" : "light"
+    }
+
     // 5. 数据模型
     ListModel { id: listmodel }
 
@@ -123,7 +128,7 @@ Window {
         primaryColor: root.primaryColor
         textColor: root.textColor
         secondaryTextColor: root.secondaryTextColor
-        currentTheme: appSettings.theme
+        currentTheme: appSettings.theme // 当前主题
         settingsMenu: settingsMenu
         windowRoot: root
     }
