@@ -35,12 +35,22 @@ Column {
                 radius: 3
                 color: progressRoot.primaryColor
                 width: {
-                    if (!progressRoot.listModel) return 0
-                    var total = progressRoot.listModel.count
-                    if (total === 0) return 0
-                    var done = 0
-                    for (var i = 0; i < total; i++)
-                        if (progressRoot.listModel.get(i).completed) done++
+                    if (!progressRoot.listModel){
+                        return 0
+                    }
+
+                    var total = progressRoot.listModel.count  // 任务总数
+
+                    if (total === 0) {
+                        return 0
+                    }
+
+                    var done = 0 // 记录完成的数量
+                    for (var i = 0; i < total; i++){
+                        if (progressRoot.listModel.get(i).completed){
+                            done++
+                        }
+                    }
                     return parent.width * (done / total)
                 }
                 Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -50,11 +60,16 @@ Column {
         Text {
             id: progressText
             text: {
-                if (!progressRoot.listModel || progressRoot.listModel.count === 0) return "暂无任务"
+                if (!progressRoot.listModel || progressRoot.listModel.count === 0){
+                    return "暂无任务"
+                }
                 var total = progressRoot.listModel.count
                 var done = 0
-                for (var i = 0; i < total; i++)
-                    if (progressRoot.listModel.get(i).completed) done++
+                for (var i = 0; i < total; i++){
+                    if (progressRoot.listModel.get(i).completed){
+                        done++
+                    }
+                }
                 return "已完成 " + done + "/" + total
             }
             font.pixelSize: 11; font.bold: true
@@ -67,7 +82,7 @@ Column {
     // 分割线
     Rectangle {
         width: parent.width
-        height: 1
+        height: 2
         radius: 0.5
         color: Qt.rgba(progressRoot.primaryColor.r, progressRoot.primaryColor.g, progressRoot.primaryColor.b, 0.1)
         antialiasing: true
