@@ -4,7 +4,7 @@ import Qt5Compat.GraphicalEffects
 
 /*
     模块：BottomBar — 底部操作栏
-    包含：圆角底部栏、统计文字、居中浮动添加按钮、纯QML粒子动画、清除已完成按钮
+    包含：圆角底部栏、统计文字、居中浮动添加按钮、脉冲动画、清除已完成按钮
 */
 
 Rectangle {
@@ -21,6 +21,7 @@ Rectangle {
     width: parent ? parent.width : 400
     height: 100
     color: surfaceColor
+    radius: 16
 
     // ── 底部圆角，与背景渐变 Rectangle 的 radius=16 匹配 ──
     Rectangle {
@@ -57,108 +58,8 @@ Rectangle {
         }
     }
 
-    // ═══════════════════════════════════════
-    // 粒子动画 — 纯 QML Repeater + 动画
-    // ═══════════════════════════════════════
-    property var particles: []
-    property int particleCount: 12
 
-    Component.onCompleted: {
-        for (var i = 0; i < particleCount; i++) {
-            particles.push({
-                x: 0, y: 0, opacity: 0, scale: 1,
-                angle: Math.random() * 360,
-                distance: 40 + Math.random() * 60,
-                duration: 400 + Math.random() * 300
-            })
-        }
-    }
-
-    function burstParticles() {
-        var cx = fabButton.x + fabButton.width / 2
-        var cy = fabButton.y + fabButton.height / 2
-        for (var i = 0; i < particleCount; i++) {
-            var p = particles[i]
-            p.angle = Math.random() * 360
-            p.distance = 40 + Math.random() * 60
-            p.duration = 400 + Math.random() * 300
-            p.x = cx
-            p.y = cy
-            p.opacity = 1
-            p.scale = 1
-            particles[i] = p  // 触发绑定更新
-        }
-        // 延迟复位
-        particleTimer.restart()
-    }
-
-    Timer {
-        id: particleTimer
-        interval: 50
-        onTriggered: {
-            for (var i = 0; i < particleCount; i++) {
-                var p = particles[i]
-                p.opacity = 0
-                p.scale = 0
-                particles[i] = p
-            }
-        }
-    }
-
-    Repeater {
-        model: particleCount
-
-        Rectangle {
-            id: spark
-            width: 8; height: 8; radius: 4
-            color: bottomBarRoot.primaryColor
-            opacity: 0
-            scale: 0
-            x: particles[index] ? particles[index].x - width / 2 : 0
-            y: particles[index] ? particles[index].y - height / 2 : 0
-
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-            Behavior on scale { NumberAnimation { duration: 200 } }
-
-            // 飞出动画
-            NumberAnimation on x {
-                id: flyX
-                running: particles[index] ? particles[index].opacity > 0 : false
-                from: particles[index] ? particles[index].x - width / 2 : 0
-                to: particles[index]
-                    ? particles[index].x - width / 2 + Math.cos(particles[index].angle * Math.PI / 180) * particles[index].distance
-                    : 0
-                duration: particles[index] ? particles[index].duration : 500
-                easing.type: Easing.OutQuad
-            }
-            NumberAnimation on y {
-                id: flyY
-                running: particles[index] ? particles[index].opacity > 0 : false
-                from: particles[index] ? particles[index].y - height / 2 : 0
-                to: particles[index]
-                    ? particles[index].y - height / 2 + Math.sin(particles[index].angle * Math.PI / 180) * particles[index].distance
-                    : 0
-                duration: particles[index] ? particles[index].duration : 500
-                easing.type: Easing.OutQuad
-            }
-            NumberAnimation on opacity {
-                running: particles[index] ? particles[index].opacity > 0 : false
-                to: 0
-                duration: particles[index] ? particles[index].duration : 500
-                easing.type: Easing.InQuad
-            }
-            NumberAnimation on scale {
-                running: particles[index] ? particles[index].opacity > 0 : false
-                to: 0.2
-                duration: particles[index] ? particles[index].duration : 500
-                easing.type: Easing.InQuad
-            }
-        }
-    }
-
-    // ═══════════════════════════════════════
     // 居中浮动添加按钮
-    // ═══════════════════════════════════════
     Rectangle {
         id: fabButton
         width: 56; height: 56; radius: 28
@@ -196,7 +97,6 @@ Rectangle {
                     bottomBarRoot.windowRoot.isAdding = !bottomBarRoot.windowRoot.isAdding
                 if (bottomBarRoot.windowRoot && bottomBarRoot.windowRoot.isAdding)
                     fabRotateAnim.restart()
-                bottomBarRoot.burstParticles()
             }
         }
 

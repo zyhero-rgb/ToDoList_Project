@@ -25,7 +25,7 @@ Window {
     color: "transparent"
     flags: Qt.FramelessWindowHint | Qt.Window
 
-    // 1. 全局设置
+    // 全局设置
     Settings {
         id: appSettings
         category: "Appearance"
@@ -35,7 +35,7 @@ Window {
         property string backgroundImage: ""
     }
 
-    // 2. 颜色主题系统
+    // 颜色主题系统
     property color backgroundColor: {
         if(appSettings.theme === "dark") return "#1a1a2e"
         else if(appSettings.theme === "darkBlue") return "#16213e"
@@ -66,7 +66,7 @@ Window {
         else return "#dfe6e9"
     }
 
-    // 3. 数据管理
+    // 数据管理
     Component.onCompleted: {
         var Color = listModelManager.loadSetting("accentColor")
         if(Color !== ""){
@@ -93,7 +93,7 @@ Window {
         }
     }
 
-    // 4. 全局状态
+    // 全局状态
     property bool isAdding: false
 
     // 主题切换函数
@@ -101,10 +101,10 @@ Window {
         appSettings.theme = appSettings.theme === "light" ? "dark" : "light"
     }
 
-    // 5. 数据模型
+    // 数据模型
     ListModel { id: listmodel }
 
-    // 6. 圆角背景
+    // 圆角背景
     Rectangle {
         anchors.fill: parent
         radius: 16
@@ -115,7 +115,7 @@ Window {
         }
     }
 
-    // 7. 模块：AppBar — 顶部应用栏
+    //  顶部应用栏
     AppBar {
         id: appBar
         width: parent.width
@@ -128,7 +128,7 @@ Window {
         windowRoot: root
     }
 
-    // 8. 模块：ProgressSection — 进度条
+    // 进度条
     ProgressSection {
         id: progressSection
         width: parent.width - 50
@@ -139,7 +139,7 @@ Window {
         listModel: listmodel
     }
 
-    // 9. 模块：TaskListView — 任务列表
+    // 任务列表
     TaskListView {
         id: listView
         width: parent.width - 40
@@ -158,7 +158,7 @@ Window {
         isAdding: root.isAdding
     }
 
-    // 10. 模块：BottomBar — 底部操作栏
+    // 底部操作栏
     BottomBar {
         id: bottomBar
         width: parent.width
@@ -173,11 +173,11 @@ Window {
         windowRoot: root
     }
 
-    // 11. 模块：TaskInputPanel — 输入面板
+    // 输入面板
     TaskInputPanel {
         id: inputPanel
         width: parent.width - 40
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.centerIn: parent
         primaryColor: root.primaryColor
         textColor: root.textColor
         secondaryTextColor: root.secondaryTextColor

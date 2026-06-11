@@ -78,10 +78,10 @@ int ListModel_Manager::addTask(QString task)
     q.bindValue(":task", task);
     if (!q.exec())
     {
-        qDebug() << "Fail to insert a task ot tasks";
+        qDebug() << "Fail to insert a task";
         return -1;
     }
-    qDebug() << "Insert a task ot tasks successfully";
+    qDebug() << "Insert a task successfully";
     return q.lastInsertId().toInt();
 }
 
