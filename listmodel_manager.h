@@ -2,17 +2,7 @@
 #define LISTMODEL_MANAGER_H
 
 #include <QObject>
-#include <QFile>
-#include <QStandardPaths>
-#include <QTextStream>
-#include <QDir>
-#include <QString>
-#include <QDebug>
-#include <QVariantList>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonParseError>
+#include <QSqlDatabase>
 
 class ListModel_Manager : public QObject
 {
@@ -20,17 +10,19 @@ class ListModel_Manager : public QObject
 public:
     ListModel_Manager(QObject *parent = nullptr);
 
-    // 任务数据
-    Q_INVOKABLE void saveData(const QVariantList &tasks);
-    Q_INVOKABLE QVariantList loadData();
+    Q_INVOKABLE int addTask(QString task);                      // 添加
+    Q_INVOKABLE bool updateTaskStatus(int id, bool completed);  // 更改任务的状态
+    Q_INVOKABLE bool deleteTask(int id);                        // 删除任务
 
-    // 用户设置（主题颜色、字体大小）
-    Q_INVOKABLE void saveSettings(const QString &accentColor, int fontSize);
-    Q_INVOKABLE QVariantMap loadSettings();
+    Q_INVOKABLE QVariantList loadTasks();                       // 加载所有的任务
+    Q_INVOKABLE void saveSetting(QString key, QString value);   // 保存设置
+    Q_INVOKABLE QString loadSetting(QString key);               // 加载设置
 
 private:
-    QString m_DataPath;
-    QString m_SettingsPath;
+    bool initDatabase(QString path);
+
+private:
+    QSqlDatabase m_database;
 };
 
 #endif // LISTMODEL_MANAGER_H

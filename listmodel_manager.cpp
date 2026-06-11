@@ -1,161 +1,161 @@
 #include "listmodel_manager.h"
+#include <QStandardPaths>
+#include <QDir>
+#include <QDebug>
+#include <QFileInfo>
+#include <QSqlQuery>
+#include <QSqlError>
 
-ListModel_Manager::ListModel_Manager(QObject *parent) : QObject(parent)
+ListModel_Manager::ListModel_Manager(QObject *parent)
 {
-    // 在Windows上返回：C:/Users/用户名/Documents
-    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
-
-    m_DataPath = QDir(docPath).filePath("Data.json");
-    m_SettingsPath = QDir(docPath).filePath("Settings.json");
-
-    // 确保目录存在
-    QDir dir = QFileInfo(m_DataPath).dir();
-    if (!dir.exists())
+    // 获取保存数据的路径
+    QString str = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (!QDir().mkpath(str))
     {
-        dir.mkpath(".");
+        qDebug() << str << "does not exist";
     }
-    qDebug() << "users' data are contained in " << m_DataPath << '\n';
-    qDebug() << "settings are contained in " << m_SettingsPath << '\n';
+    // 构建数据库文件路径
+    QString dataPath = QDir(str).filePath("tasks.db");
+    if (!QFileInfo::exists(dataPath))
+    {
+        qDebug() << dataPath << "does not exist";
+    }
+    qInfo() << "dataPath : " << dataPath;
+    initDatabase(dataPath);
 }
 
-// QVariant 是Qt中的一个通用类型容器，可以存储几乎所有Qt支持的数据类型
-// 保存数据
-void ListModel_Manager::saveData(const QVariantList &tasks)
+// 初始化数据库
+bool ListModel_Manager::initDatabase(QString path)
 {
-    // 打开文件
-    QFile file(m_DataPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    m_database = QSqlDatabase::addDatabase("QSQLITE");
+    m_database.setDatabaseName(path);
+
+    if (!m_database.open())
     {
-        qDebug() << "无法打开文件进行写入:" << file.errorString();
-        return;
+        qDebug() << "fail to open the database," << m_database.lastError().text();
+        return false;
     }
 
-    // 创建Json数组
-    QJsonArray jsonArray;
-
-    QTextStream out(&file);
-    for (const QVariant &task : tasks)
+    QSqlQuery query(m_database);
+    // 建表
+    query.exec(R"(
+    CREATE TABLE IF NOT EXISTS tasks
+        (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task TEXT NOT NULL,
+            completed INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now','localtime'))
+        )
+        )");
+    if (query.lastError().isValid())
     {
-        // 转换为Map，键值对
-        QVariantMap taskMap = task.toMap();
-
-        // 创建Json对象
-        QJsonObject jsonObject;
-
-        jsonObject["task"] = taskMap.value("task").toString();
-        jsonObject["completed"] = taskMap.value("completed").toBool();
-        jsonArray.append(jsonObject);
+        qDebug() << "fail to create table tasks";
+        return false;
     }
 
-    QJsonDocument doc(jsonArray);
-    file.write(doc.toJson());
+    query.exec(R"(
+    CREATE TABLE IF NOT EXISTS settings
+        (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    )");
+    if (query.lastError().isValid())
+    {
+        qDebug() << "fail to create table settings";
+        return false;
+    }
 
-    file.close();
-    qDebug() << "Json文件保存成功，保存了" << tasks.size() << "个";
+    qInfo() << "initDatabase successfully:" << path;
+    return true;
 }
 
-// 加载数据
-QVariantList ListModel_Manager::loadData()
+// 添加任务
+int ListModel_Manager::addTask(QString task)
+{
+    QSqlQuery q(m_database);
+    q.prepare("INSERT INTO tasks (task) VALUES(:task)");
+    q.bindValue(":task", task);
+    if (!q.exec())
+    {
+        qDebug() << "Fail to insert a task ot tasks";
+        return -1;
+    }
+    qDebug() << "Insert a task ot tasks successfully";
+    return q.lastInsertId().toInt();
+}
+
+// 删除任务
+bool ListModel_Manager::deleteTask(int id)
+{
+    QSqlQuery q(m_database);
+    q.prepare("DELETE FROM tasks WHERE id = :id");
+    q.bindValue(":id", id);
+    if (!q.exec())
+    {
+        qDebug() << "Fail to delete task of " << id;
+        return false;
+    }
+    qDebug() << "Delete task of " << id << "sucessfully";
+    return true;
+}
+
+// 从数据库加载数据
+QVariantList ListModel_Manager::loadTasks()
 {
     QVariantList tasks;
-
-    // 打开Json文件
-    QFile file(m_DataPath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    QSqlQuery q(m_database);
+    q.exec("SELECT id, task, completed FROM tasks");
+    while (q.next())
     {
-        qDebug() << "无法打开文件进行读取:" << file.errorString();
-        return tasks;
+        QVariantMap map;
+        map["id"] = q.value(0).toInt();
+        map["task"] = q.value(1).toString();
+        map["completed"] = q.value(2).toBool();
+        tasks.append(map);
     }
-    //  读取文件内容
-    QByteArray data = file.readAll();
-    file.close();
-    // 解析Json文件
-    QJsonParseError parseerror;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &parseerror);
-    if (parseerror.error != QJsonParseError::NoError)
-    {
-        qDebug() << "Json文件解析错误" << "\n";
-        return tasks;
-    }
-
-    if (doc.isArray()) // 检查根元素是否是数组
-    {
-        QJsonArray jsonArray = doc.array();
-        for (const QJsonValue &value : jsonArray)
-        {
-            QJsonObject obj = value.toObject();
-
-            QVariantMap map;
-            map["task"] = obj.value("task").toString();
-            map["completed"] = obj.value("completed").toBool();
-
-            tasks.append(map);
-        }
-    }
-    else
-    {
-        qDebug() << "JSON格式错误：顶层不是数组";
-    }
-    qDebug() << "加载数据成功" << '\n';
+    qDebug() << "Load tasks sucessfully";
     return tasks;
 }
 
-// 保存用户设置（主题颜色，字体大小）
-void ListModel_Manager::saveSettings(const QString &accentColor, int fontSize)
+// 更改任务的完成状态
+bool ListModel_Manager::updateTaskStatus(int id, bool completed)
 {
-    QFile file(m_SettingsPath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    QSqlQuery q(m_database);
+    q.prepare("UPDATE tasks SET completed = :completed WHERE id = :id");
+    q.bindValue(":completed", completed ? 1 : 0);
+    q.bindValue(":id", id);
+    if (!q.exec())
     {
-        qDebug() << "无法打开设置文件进行写入:" << file.errorString();
-        return;
+        qDebug() << "Fail to update task status ,id = " << id;
+        return false;
     }
-
-    QJsonObject settingsObj;
-    settingsObj["accentColor"] = accentColor;
-    settingsObj["fontSize"] = fontSize;
-
-    QJsonDocument doc(settingsObj);
-    file.write(doc.toJson());
-    file.close();
-
-    qDebug() << "设置保存成功: 颜色 =" << accentColor << ", 字体大小 =" << fontSize;
+    return true;
 }
 
-// 加载用户设置
-QVariantMap ListModel_Manager::loadSettings()
+//保存设置
+void ListModel_Manager::saveSetting(QString key, QString value)
 {
-    QVariantMap settings;
-    settings["accentColor"] = "#4361ee"; // 默认值
-    settings["fontSize"] = 16;
-
-    QFile file(m_SettingsPath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    QSqlQuery q(m_database);
+    q.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES(:key, :value)");
+    q.bindValue(":key", key);
+    q.bindValue(":value", value);
+    if (!q.exec())
     {
-        qDebug() << "设置文件不存在，使用默认设置";
-        return settings;
+        qDebug() << "Fail to insert setting";
     }
+}
 
-    QByteArray data = file.readAll();
-    file.close();
 
-    QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-    if (parseError.error != QJsonParseError::NoError)
+// 加载设置
+QString ListModel_Manager::loadSetting(QString key)
+{
+    QSqlQuery q(m_database);
+    q.prepare("SELECT value FROM settings WHERE key = :key");
+    q.bindValue(":key", key);
+    if (q.exec() && q.next())
     {
-        qDebug() << "设置文件解析错误:" << parseError.errorString();
-        return settings;
+        return q.value(0).toString();
     }
-
-    if (doc.isObject())
-    {
-        QJsonObject obj = doc.object();
-        if (obj.contains("accentColor"))
-            settings["accentColor"] = obj.value("accentColor").toString();
-        if (obj.contains("fontSize"))
-            settings["fontSize"] = obj.value("fontSize").toInt();
-    }
-
-    qDebug() << "设置加载成功:" << settings["accentColor"].toString()
-             << ", 字体大小:" << settings["fontSize"].toInt();
-    return settings;
+    return "";
 }

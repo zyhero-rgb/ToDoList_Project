@@ -32,7 +32,8 @@ Rectangle {
         // 顶部分割线
         Rectangle {
             width: parent.width
-            height: 1
+            height: 2
+            radius: 1
             anchors.top: parent.top
             color: Qt.rgba(borderColor.r, borderColor.g, borderColor.b, 0.4)
         }
@@ -237,9 +238,14 @@ Rectangle {
         anchors.bottomMargin: 14
         color: clearArea.containsMouse ? "#15e74c3c" : "transparent"
         visible: {
-            if (!bottomBarRoot.listModel) return false
-            for (var i = 0; i < bottomBarRoot.listModel.count; i++)
-                if (bottomBarRoot.listModel.get(i).completed) return true
+            if (!bottomBarRoot.listModel){
+                return false
+            }
+            for (var i = 0; i < bottomBarRoot.listModel.count; i++){
+                if (bottomBarRoot.listModel.get(i).completed){
+                    return true
+                }
+            }
             return false
         }
 
@@ -257,9 +263,9 @@ Rectangle {
                 if (!bottomBarRoot.listModel) return
                 for (var i = bottomBarRoot.listModel.count - 1; i >= 0; i--) {
                     if (bottomBarRoot.listModel.get(i).completed)
+                        listModelManager.deleteTask(bottomBarRoot.listModel.get(i).id)
                         bottomBarRoot.listModel.remove(i)
                 }
-                if (typeof saveData === "function") saveData()
             }
         }
 

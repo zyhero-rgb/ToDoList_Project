@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
-
+import QtQuick.Layouts
 /*
     模块：TaskItem — 单个任务项组件
     包含：复选框、文本、删除按钮、动画
@@ -158,8 +158,10 @@ Rectangle {
         }
         ScriptAction {
             script: {
-                if (typeof listmodel !== "undefined") listmodel.remove(index)
-                if (typeof saveData === "function") saveData()
+                if (typeof listmodel !== "undefined") {
+                    listModelManager.deleteTask(listmodel.get(index).id)
+                    listmodel.remove(index)
+                }
             }
         }
     }

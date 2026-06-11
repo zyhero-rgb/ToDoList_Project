@@ -5,7 +5,7 @@ project(ToDoList_Project VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.2 COMPONENTS Quick REQUIRED)
+find_package(Qt6 6.2 COMPONENTS Quick Sql REQUIRED)
 
 qt_add_executable(appToDoList_Project
     main.cpp
@@ -40,7 +40,7 @@ set_target_properties(appToDoList_Project PROPERTIES
 )
 
 target_link_libraries(appToDoList_Project
-    PRIVATE Qt6::Quick)
+    PRIVATE Qt6::Quick Qt6::Sql)
 
 include(GNUInstallDirs)
 install(TARGETS appToDoList_Project

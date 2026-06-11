@@ -100,15 +100,18 @@ Rectangle {
                               : Qt.rgba(inputRoot.borderColor.r, inputRoot.borderColor.g, inputRoot.borderColor.b, 0.5)
             }
 
+            // 点击回车键添加任务
             Keys.onReturnPressed: function(event) {
                 if (!(event.modifiers & Qt.ControlModifier)) {
                     var txt = taskInput.text.trim()
                     if (txt !== "" && inputRoot.listModel) {
-                        inputRoot.listModel.append({task: txt, completed: false})
+                        // 获取新任务的ID
+                        var newId = listModelManager.addTask(txt);
+                        // 将新任务加入listModel
+                        inputRoot.listModel.append({id: newId, task: txt, completed: false})
                         taskInput.clear()
                         if (inputRoot.windowRoot)
                             inputRoot.windowRoot.isAdding = false
-                        if (typeof saveData === "function") saveData()
                     }
                     event.accepted = true
                 }

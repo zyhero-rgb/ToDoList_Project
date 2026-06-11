@@ -83,6 +83,7 @@ Rectangle {
                 if (listViewRoot.listModel) {
                     // 通知外部保存
                     listViewRoot.listModel.setProperty(index, "completed", completed)
+                    listModelManager.updateTaskStatus(id, completed)
                 }
             }
             onDeleteTask: deleteAnimation.start()
@@ -246,9 +247,11 @@ Rectangle {
             }
             ScriptAction {
                 script: {
-                    if (listViewRoot.listModel)
+                    if (listViewRoot.listModel){
+                        var taskId = listViewRoot.listModel.get(index).id
+                        listModelManager.deleteTask(taskId)
                         listViewRoot.listModel.remove(index)
-                    if (typeof saveData === "function") saveData()
+                    }
                 }
             }
         }

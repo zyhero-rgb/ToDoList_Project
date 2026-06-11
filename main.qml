@@ -68,13 +68,16 @@ Window {
 
     // 3. 数据管理
     Component.onCompleted: {
-        var savedSettings = listModelManager.loadSettings()
-        if (savedSettings.accentColor)
-            appSettings.accentColor = savedSettings.accentColor
-        if (savedSettings.fontSize)
-            appSettings.fontSize = savedSettings.fontSize
-
-        var savedTasks = listModelManager.loadData()
+        var Color = listModelManager.loadSetting("accentColor")
+        if(Color !== ""){
+            appSettings.accentColor = Color;
+        }
+        var FontSize = listModelManager.loadSetting("fontSize")
+        if(FontSize !== ""){
+            appSettings.fontSize = parseInt(FontSize)
+        }
+        //程序启动时，加载任务数据
+        var savedTasks = listModelManager.loadTasks()
         for (var i = 0; i < savedTasks.length; i++) {
             listmodel.append(savedTasks[i])
         }
@@ -83,10 +86,10 @@ Window {
     Connections {
         target: appSettings
         function onAccentColorChanged() {
-            listModelManager.saveSettings(appSettings.accentColor, appSettings.fontSize)
+            listModelManager.saveSetting("accentColor", appSettings.accentColor)
         }
         function onFontSizeChanged() {
-            listModelManager.saveSettings(appSettings.accentColor, appSettings.fontSize)
+            listModelManager.saveSetting("fontSize", appSettings.fontSize)
         }
     }
 
@@ -100,14 +103,6 @@ Window {
 
     // 5. 数据模型
     ListModel { id: listmodel }
-
-    function saveData() {
-        var tasks = []
-        for (var i = 0; i < listmodel.count; i++) {
-            tasks.push({task: listmodel.get(i).task, completed: listmodel.get(i).completed})
-        }
-        listModelManager.saveData(tasks)
-    }
 
     // 6. 圆角背景
     Rectangle {
@@ -211,10 +206,11 @@ Window {
             text: "🧹 清除已完成"
             onTriggered: {
                 for (var i = listmodel.count - 1; i >= 0; i--) {
-                    if (listmodel.get(i).completed)
+                    if (listmodel.get(i).completed){
+                        listModelManager.deleteTask(listmodel.get(i).id)
                         listmodel.remove(i)
+                    }
                 }
-                saveData()
             }
         }
         MenuItem {
